@@ -9,11 +9,15 @@ import ohos.agp.components.Component;
 import ohos.agp.components.Image;
 import ohos.hiviewdfx.HiLog;
 import ohos.hiviewdfx.HiLogLabel;
+import ohos.media.image.ImagePacker;
 import ohos.media.image.PixelMap;
-import ohos.media.image.common.PixelFormat;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 public class MainAbilitySlice extends AbilitySlice {
-    static final HiLogLabel label = new HiLogLabel(HiLog.LOG_APP, 0x00202, "APP");
+    private static final HiLogLabel LOG_LABEL = new HiLogLabel(HiLog.LOG_APP, 0x00201, "APP");
 
     @Override
     public void onStart(Intent intent) {
@@ -26,9 +30,32 @@ public class MainAbilitySlice extends AbilitySlice {
                 @Override
                 public void onClick(Component component) {
                     Image image = (Image) findComponentById(ResourceTable.Id_image1);
-                    //PixelMap newPixelMap = Compressor.halfTheSize(image);
-                    PixelMap newPixelMap = Compressor.compress(image, PixelFormat.RGB_565);
-                    image.setPixelMap(newPixelMap);
+                    PixelMap pixelMap = image.getPixelMap();
+                    HiLog.error(LOG_LABEL, "..." + pixelMap.getPixelBytesNumber() +  "...");
+                    ImagePacker imagePacker = ImagePacker.create();
+                    FileOutputStream outputStream = null;
+                    File file = new File(System.getProperty("java.io.tmpdir") + File.separator + "tmp.png");
+                    try {
+                        // 模拟器的照相机照出来的图片有问题，自己临时写一张图片
+                        outputStream = new FileOutputStream(file);
+                        ImagePacker.PackingOptions packingOptions = new ImagePacker.PackingOptions();
+                        packingOptions.quality = 100;
+                        boolean result = imagePacker.initializePacking(outputStream, packingOptions);
+                        result = imagePacker.addImage(pixelMap);
+                        long dataSize = imagePacker.finalizePacking();
+
+                        /*
+                        * 默认压缩
+                        * File newFile = Compressor.defaultCompress(file);
+                        */
+                        // 自定义压缩
+                        File newFile = Compressor.customCompress(file, 1000, 500, 60);
+                        PixelMap newPixelMap = Compressor.decode(newFile);
+                        HiLog.error(LOG_LABEL, "..." + newPixelMap.getPixelBytesNumber() + "...");
+                        image.setPixelMap(newPixelMap);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             });
         }
