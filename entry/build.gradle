@@ -10,4 +10,5 @@ ohos {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar', '*.har'])
     testCompile'junit:junit:4.12'
+    compile project(path: ':compress')
 }
