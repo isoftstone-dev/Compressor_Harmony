@@ -20,7 +20,6 @@ public class MainAbilitySlice extends AbilitySlice {
         super.onStart(intent);
         super.setUIContent(ResourceTable.Layout_ability_main);
         Button button = (Button) findComponentById(ResourceTable.Id_button);
-        HiLog.info(label, "... " + this.getCacheDir());
         if (button != null) {
             // 为按钮设置点击回调
             button.setClickedListener(new Component.ClickedListener() {
