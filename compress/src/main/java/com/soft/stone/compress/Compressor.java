@@ -1,5 +1,6 @@
 package com.soft.stone.compress;
 
+import ohos.app.Context;
 import ohos.media.image.ImagePacker;
 import ohos.media.image.ImageSource;
 import ohos.media.image.PixelMap;
@@ -29,24 +30,22 @@ public class Compressor {
     /**
      * 默认压缩
      *
+     * @param context 上下文
      * @param file 临时文件
      * @return 临时文件
      * @throws IOException IO异常
      */
-    public static File defaultCompress(File file) throws IOException {
-        PixelMap pixelMap = decode(file, 612,816);
-        ImagePacker imagePacker = ImagePacker.create();
-        ImagePacker.PackingOptions options = new ImagePacker.PackingOptions();
-        options.quality = 80;
-        imagePacker.initializePacking(new FileOutputStream(file), options);
-        imagePacker.addImage(pixelMap);
-        imagePacker.finalizePacking();
-        return file;
+    public static File defaultCompress(Context context, File file) throws IOException {
+        File tmpFile = copyToCache(context, file);
+        PixelMap pixelMap = decode(tmpFile, 612, 816);
+        refreshTmpFile(pixelMap, tmpFile, 80);
+        return tmpFile;
     }
 
     /**
      * 自定义压缩
      *
+     * @param context 上下文
      * @param file 文件目录
      * @param width 需要显示的宽度
      * @param height 需要显示的高度
@@ -54,15 +53,29 @@ public class Compressor {
      * @return 文件目录
      * @throws IOException IO异常
      */
-    public static File customCompress(File file, int width, int height, int quality) throws IOException {
-        PixelMap pixelMap = decode(file, width,height);
+    public static File customCompress(Context context, File file, int width, int height, int quality) throws IOException {
+        File tmpFile = copyToCache(context, file);
+        PixelMap pixelMap = decode(tmpFile, width, height);
+        refreshTmpFile(pixelMap, tmpFile, quality);
+        return tmpFile;
+    }
+
+    private static File copyToCache(Context context, File imageFile) throws IOException {
+        PixelMap pixelMap = decode(imageFile);
+        String cachePath = context.getCacheDir() + File.separator + imageFile.getName();
+        File cacheFile = new File(cachePath);
+        int quality = 100; // 压缩质量
+        refreshTmpFile(pixelMap, cacheFile, quality);
+        return cacheFile;
+    }
+
+    private static void refreshTmpFile(PixelMap pixelMap, File file, int quality) throws IOException {
         ImagePacker imagePacker = ImagePacker.create();
         ImagePacker.PackingOptions options = new ImagePacker.PackingOptions();
         options.quality = quality;
         imagePacker.initializePacking(new FileOutputStream(file), options);
         imagePacker.addImage(pixelMap);
         imagePacker.finalizePacking();
-        return file;
     }
 
     private static PixelMap decode(File file, int width, int height) {
